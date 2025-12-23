@@ -6,12 +6,14 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import requests
 from dotenv import load_dotenv
+import time
 
 load_dotenv()
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
 def call_gemini(prompt: str):
+    time.sleep(5)
     headers = {"Content-Type": "application/json"}
     params = {"key": GEMINI_API_KEY}
     body = {"contents": [{"parts": [{"text": prompt}]}]}
@@ -107,7 +109,7 @@ def start_session(body: StartSessionBody):
     candidates = parse_candidates(candidates_text)
 
     print(f"=== 送給前端的問題與候選回答 ===\n問題: {question}\n候選回答: {candidates}")
-    return {"session_id": session_id, "question": question, "candidate_answers": candidates, "round": 1, "total_rounds":5}
+    return {"session_id": session_id, "question": question, "candidate_answers": candidates, "round": 1, "total_rounds":1}
 
 # -----------------------------
 # 下一題
@@ -124,7 +126,7 @@ def next_round(body: NextRoundBody):
     session["round"] += 1
 
     # 超過上限題數，生成建議回覆
-    if session["round"] > 5:
+    if session["round"] > 1:
         # 準備送給 Gemini 的 prompt
         history = session["history"]
         prompt = f"""
@@ -162,7 +164,7 @@ def next_round(body: NextRoundBody):
 
     print(f"=== 送給前端的問題與候選回答 ===\n問題: {question}\n候選回答: {candidates}")
 
-    return {"question": question, "candidate_answers": candidates, "round": session["round"], "total_rounds":5}
+    return {"question": question, "candidate_answers": candidates, "round": session["round"], "total_rounds":1}
 
 
 # -----------------------------
